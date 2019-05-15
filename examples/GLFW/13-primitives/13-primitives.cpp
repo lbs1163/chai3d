@@ -138,6 +138,8 @@ int swapInterval = 1;
 // root resource path
 string resourceRoot;
 
+bool button = false;
+
 
 //------------------------------------------------------------------------------
 // DECLARED FUNCTIONS
@@ -743,6 +745,11 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
         mirroredDisplay = !mirroredDisplay;
         camera->setMirrorVertical(mirroredDisplay);
     }
+
+	else if (a_key == GLFW_KEY_SPACE)
+	{
+		button = !button;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -844,7 +851,7 @@ void updateHaptics(void)
         cTransform world_T_tool = tool->getDeviceGlobalTransform();
 
         // get status of user switch
-        bool button = tool->getUserSwitch(0);
+        // bool button = tool->getUserSwitch(0);
 
         //
         // STATE 1:
