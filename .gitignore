@@ -21,6 +21,8 @@ x86/
 bld/
 [Bb]in/*/**
 ![Bb]in/*/*.dll
+problem2/[Bb]in/*/**
+!problem2/[Bb]in/*/*.dll
 [Oo]bj/
 
 # Visual Studio 2015 cache/options directory

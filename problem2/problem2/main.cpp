@@ -1,54 +1,8 @@
-//==============================================================================
-/*
-Software License Agreement (BSD License)
-Copyright (c) 2003-2016, CHAI3D.
-(www.chai3d.org)
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-* Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above
-copyright notice, this list of conditions and the following
-disclaimer in the documentation and/or other materials provided
-with the distribution.
-
-* Neither the name of CHAI3D nor the names of its contributors may
-be used to endorse or promote products derived from this software
-without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-
-\author    <http://www.chai3d.org>
-\author    Francois Conti
-\version   3.2.0 $Rev: 1925 $
-*/
-//==============================================================================
-
-//------------------------------------------------------------------------------
 #include "chai3d.h"
-//------------------------------------------------------------------------------
 #include <GLFW/glfw3.h>
-//------------------------------------------------------------------------------
+
 using namespace chai3d;
 using namespace std;
-//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 // GENERAL SETTINGS
@@ -93,11 +47,7 @@ cGenericHapticDevicePtr hapticDevice;
 cToolCursor* tool;
 
 // a few objects that are placed in the scene
-cMesh* base;
-cMesh* teaPot;
-cMesh* cylinder;
-cMesh* cone;
-cMultiSegment* segments;
+cMultiMesh* multiMesh;
 
 // a colored background
 cBackground* background;
@@ -138,7 +88,13 @@ int swapInterval = 1;
 // root resource path
 string resourceRoot;
 
-bool button = false;
+
+//------------------------------------------------------------------------------
+// DECLARED MACROS
+//------------------------------------------------------------------------------
+
+// convert to resource path
+#define RESOURCE_PATH(p)    (char*)((resourceRoot+string(p)).c_str())
 
 
 //------------------------------------------------------------------------------
@@ -163,16 +119,6 @@ void updateHaptics(void);
 // this function closes the application
 void close(void);
 
-
-//==============================================================================
-/*
-DEMO:   13-primitives.cpp
-
-This example illustrates how to build simple triangle based mesh primitives
-using the functions provided in file graphics/CPrimitives.h
-*/
-//==============================================================================
-
 int main(int argc, char* argv[])
 {
 	//--------------------------------------------------------------------------
@@ -181,12 +127,10 @@ int main(int argc, char* argv[])
 
 	cout << endl;
 	cout << "-----------------------------------" << endl;
-	cout << "CHAI3D" << endl;
-	cout << "Demo: 13-primitives" << endl;
-	cout << "Copyright 2003-2016" << endl;
+	cout << "Advanced Haptics HW4" << endl;
+	cout << "Problem 2: Model Loading" << endl;
 	cout << "-----------------------------------" << endl << endl << endl;
 	cout << "Keyboard Options:" << endl << endl;
-	cout << "[s] - Save copy of shadowmap to file" << endl;
 	cout << "[f] - Enable/Disable full screen mode" << endl;
 	cout << "[m] - Enable/Disable vertical mirroring" << endl;
 	cout << "[q] - Exit application" << endl;
@@ -354,7 +298,7 @@ int main(int argc, char* argv[])
 	tool->setWorkspaceRadius(1.0);
 
 	// define the radius of the tool (sphere)
-	double toolRadius = 0.05;
+	double toolRadius = 0.02;
 
 	// define a radius for the tool
 	tool->setRadius(toolRadius);
@@ -365,7 +309,7 @@ int main(int argc, char* argv[])
 	// enable if objects in the scene are going to rotate of translate
 	// or possibly collide against the tool. If the environment
 	// is entirely static, you can set this parameter to "false"
-	tool->enableDynamicObjects(true);
+	tool->enableDynamicObjects(false);
 
 	// haptic forces are enabled only if small forces are first sent to the device;
 	// this mode avoids the force spike that occurs when the application starts when 
@@ -389,195 +333,49 @@ int main(int argc, char* argv[])
 
 
 	/////////////////////////////////////////////////////////////////////////
-	// BASE
+	// MODEL LOADING
 	/////////////////////////////////////////////////////////////////////////
 
-	// create a mesh
-	cMesh* base = new cMesh();
+	// create a multi-mesh
+	multiMesh = new cMultiMesh();
 
 	// add object to world
-	world->addChild(base);
+	world->addChild(multiMesh);
 
-	// build mesh using a cylinder primitive
-	cCreateCylinder(base,
-		0.01,
-		0.5,
-		36,
-		1,
-		10,
-		true,
-		true,
-		cVector3d(0.0, 0.0, -0.01),
-		cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(0), C_EULER_ORDER_XYZ)
-	);
+	multiMesh->setLocalPos(0.0, 0.0, 0.0);
 
-	// set material properties
-	base->m_material->setGrayGainsboro();
-	base->m_material->setStiffness(0.5 * maxStiffness);
-
-	// build collision detection tree
-	base->createAABBCollisionDetector(toolRadius);
-
-	// use display list to optimize graphic rendering performance
-	base->setUseDisplayList(true);
-
-
-	/////////////////////////////////////////////////////////////////////////
-	// TEA POT
-	/////////////////////////////////////////////////////////////////////////
-
-	// create a mesh
-	cMesh* teaPot = new cMesh();
-
-	// add object to world
-	base->addChild(teaPot);
-
-	// build mesh using a cylinder primitive
-	cCreateTeaPot(teaPot,
-		0.5,
-		4,
-		cVector3d(0.0, 0.0, 0.0),
-		cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(-90), C_EULER_ORDER_XYZ)
-	);
-
-	// position object
-	teaPot->setLocalPos(0.1, 0.2, 0.0);
-
-	// set material properties
-	teaPot->m_material->setRedDark();
-	teaPot->m_material->setStiffness(0.5 * maxStiffness);
-
-	// build collision detection tree
-	teaPot->createAABBCollisionDetector(toolRadius);
-
-	// use display list to optimize graphic rendering performance
-	teaPot->setUseDisplayList(true);
-
-
-	/////////////////////////////////////////////////////////////////////////
-	// CYLINDER
-	/////////////////////////////////////////////////////////////////////////
-
-	// create a mesh
-	cMesh*  cylinder = new cMesh();
-
-	// add object to world
-	base->addChild(cylinder);
-
-	// build mesh using a cylinder primitive
-	cCreatePipe(cylinder,
-		0.15,
-		0.05,
-		0.06,
-		32,
-		1,
-		cVector3d(-0.05, -0.20, 0.0),
-		cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(170), C_EULER_ORDER_XYZ)
-	);
-
-	// set material properties
-	cylinder->m_material->setBlueCornflower();
-	cylinder->m_material->setStiffness(0.5 * maxStiffness);
-
-	// build collision detection tree
-	cylinder->createAABBCollisionDetector(toolRadius);
-
-	// use display list to optimize graphic rendering performance
-	cylinder->setUseDisplayList(true);
-
-
-	/////////////////////////////////////////////////////////////////////////
-	// CONE
-	/////////////////////////////////////////////////////////////////////////
-
-	// create a mesh
-	cMesh* cone = new cMesh();
-
-	// add object to world
-	base->addChild(cone);
-
-	// build mesh using a cylinder primitive
-	cCreateCone(cone,
-		0.15,
-		0.05,
-		0.01,
-		32,
-		1,
-		1,
-		true,
-		true,
-		cVector3d(0.30, 0.0, 0.0),
-		cMatrix3d(cDegToRad(0), cDegToRad(0), cDegToRad(0), C_EULER_ORDER_XYZ)
-	);
-
-	// set material properties
-	cone->m_material->setGreenForest();
-	cone->m_material->setStiffness(0.5 * maxStiffness);
-
-	// build collision detection tree
-	cone->createAABBCollisionDetector(toolRadius);
-
-	// use display list to optimize graphic rendering performance
-	cone->setUseDisplayList(true);
-
-
-	/////////////////////////////////////////////////////////////////////////
-	// SEGMENTS
-	/////////////////////////////////////////////////////////////////////////
-
-	// create a line segment object
-	cMultiSegment* segments = new cMultiSegment();
-
-	// add object to world
-	base->addChild(segments);
-
-	// build some segment
-	double l = 0.0;
-	double dl = 0.001;
-	double a = 0.0;
-	double da = 0.2;
-	double r = 0.05;
-	for (int i = 0; i<200; i++)
+	// load model from file
+	bool fileload;
+	fileload = multiMesh->loadFromFile("../bin/resources/horse/horse.obj");
+	if (!fileload)
 	{
-		double px0 = r * cos(a);
-		double py0 = r * sin(a);
-		double pz0 = l;
-
-		double px1 = r * cos(a + da);
-		double py1 = r * sin(a + da);
-		double pz1 = l + dl;
-
-		// create vertex 0
-		int index0 = segments->newVertex(px0, py0, pz0);
-
-		// create vertex 1
-		int index1 = segments->newVertex(px1, py1, pz1);
-
-		// create segment
-		segments->newSegment(index0, index1);
-
-		l = l + dl;
-		a = a + da;
+		printf("Error - 3D Model failed to load correctly.\n");
+		close();
+		return (-1);
 	}
 
-	// set haptic properties
-	segments->m_material->setStiffness(0.5 * maxStiffness);
+	// compute a boundary box
+	multiMesh->computeBoundaryBox(true);
 
-	// position object
-	segments->setLocalPos(0.22, -0.22, 0.0);
+	// get dimensions of object
+	double size = cSub(multiMesh->getBoundaryMax(), multiMesh->getBoundaryMin()).length();
 
-	// set segment properties
-	cColorf color;
-	color.setYellowGold();
-	segments->setLineColor(color);
-	segments->setLineWidth(4.0);
-	segments->setUseDisplayList(true);
+	// resize object to screen
+	if (size > 0)
+	{
+		multiMesh->scale(0.8 / size);
+	}
+
+	multiMesh->translate(0.0, 0.2, -0.2);
+
+	// set material properties
+	multiMesh->setStiffness(0.9 * maxStiffness);
 
 	// build collision detection tree
-	segments->createAABBCollisionDetector(toolRadius);
+	multiMesh->createAABBCollisionDetector(toolRadius);
 
 	// use display list to optimize graphic rendering performance
-	segments->setUseDisplayList(true);
+	multiMesh->setUseDisplayList(true);
 
 
 	//--------------------------------------------------------------------------
@@ -592,10 +390,7 @@ int main(int argc, char* argv[])
 
 	// assign shader to mesh objects in the world
 	tool->setShaderProgram(shaderProgram);
-	base->setShaderProgram(shaderProgram);
-	teaPot->setShaderProgram(shaderProgram);
-	cylinder->setShaderProgram(shaderProgram);
-	cone->setShaderProgram(shaderProgram);
+	multiMesh->setShaderProgram(shaderProgram);
 
 
 	//--------------------------------------------------------------------------
@@ -701,15 +496,6 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
 		glfwSetWindowShouldClose(a_window, GLFW_TRUE);
 	}
 
-	// option - save shadow map to file
-	else if (a_key == GLFW_KEY_S)
-	{
-		cImagePtr image = cImage::create();
-		light->m_shadowMap->copyDepthBuffer(image);
-		image->saveToFile("shadowmapshot.png");
-		cout << "> Saved screenshot of shadowmap to file.       \r";
-	}
-
 	// option - toggle fullscreen
 	else if (a_key == GLFW_KEY_F)
 	{
@@ -746,10 +532,6 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
 		camera->setMirrorVertical(mirroredDisplay);
 	}
 
-	else if (a_key == GLFW_KEY_SPACE)
-	{
-		button = !button;
-	}
 }
 
 //------------------------------------------------------------------------------
@@ -807,18 +589,8 @@ void updateGraphics(void)
 
 //------------------------------------------------------------------------------
 
-enum cMode
-{
-	IDLE,
-	SELECTION
-};
-
 void updateHaptics(void)
 {
-	cMode state = IDLE;
-	cGenericObject* object = NULL;
-	cTransform tool_T_object;
-
 	// simulation in now running
 	simulationRunning = true;
 	simulationFinished = false;
@@ -841,77 +613,6 @@ void updateHaptics(void)
 
 		// compute interaction forces
 		tool->computeInteractionForces();
-
-
-		/////////////////////////////////////////////////////////////////////////
-		// HAPTIC MANIPULATION
-		/////////////////////////////////////////////////////////////////////////
-
-		// compute transformation from world to tool (haptic device)
-		cTransform world_T_tool = tool->getDeviceGlobalTransform();
-
-		// get status of user switch
-		// bool button = tool->getUserSwitch(0);
-
-		//
-		// STATE 1:
-		// Idle mode - user presses the user switch
-		//
-		if ((state == IDLE) && (button == true))
-		{
-			// check if at least one contact has occurred
-			if (tool->m_hapticPoint->getNumCollisionEvents() > 0)
-			{
-				// get contact event
-				cCollisionEvent* collisionEvent = tool->m_hapticPoint->getCollisionEvent(0);
-
-				// get object from contact event
-				object = collisionEvent->m_object;
-
-				// get transformation from object
-				cTransform world_T_object = object->getGlobalTransform();
-
-				// compute inverse transformation from contact point to object 
-				cTransform tool_T_world = world_T_tool;
-				tool_T_world.invert();
-
-				// store current transformation tool
-				tool_T_object = tool_T_world * world_T_object;
-
-				// update state
-				state = SELECTION;
-			}
-		}
-
-		//
-		// STATE 2:
-		// Selection mode - operator maintains user switch enabled and moves object
-		//
-		else if ((state == SELECTION) && (button == true))
-		{
-			// compute new tranformation of object in global coordinates
-			cTransform world_T_object = world_T_tool * tool_T_object;
-
-			// compute new tranformation of object in local coordinates
-			cTransform parent_T_world = object->getParent()->getLocalTransform();
-			parent_T_world.invert();
-			cTransform parent_T_object = parent_T_world * world_T_object;
-
-			// assign new local transformation to object
-			object->setLocalTransform(parent_T_object);
-
-			// set zero forces when manipulating objects
-			tool->setDeviceGlobalForce(0.0, 0.0, 0.0);
-		}
-
-		//
-		// STATE 3:
-		// Finalize Selection mode - operator releases user switch.
-		//
-		else
-		{
-			state = IDLE;
-		}
 
 
 		/////////////////////////////////////////////////////////////////////////
