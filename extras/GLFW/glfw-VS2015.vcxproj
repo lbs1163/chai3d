@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>glfw</ProjectName>
-    <ProjectGuid>{58436054-98D6-466B-89E2-9A441E002F20}</ProjectGuid>
+    <ProjectGuid>{71AF75A0-52B6-4C1B-8E56-CB31C6741A18}</ProjectGuid>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">

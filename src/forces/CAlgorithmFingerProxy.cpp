@@ -954,10 +954,10 @@ void cAlgorithmFingerProxy::testFrictionAndMoveProxy(const cVector3d& a_goal,
         return;
     }
 
-    // compute penetration depth; how far is the device "behind" the
-    // plane of the obstructing surface
+    // compute displacement vector; how far is the device on the
+    // plane of the obstructing surface from last proxy position
     cVector3d projectedGoal = cProjectPointOnPlane(m_deviceGlobalPos, a_proxy, a_normal);
-    double penetrationDepth = cSub(m_deviceGlobalPos,projectedGoal).length();
+	cVector3d displacementVector = cSub(projectedGoal, a_proxy);
 
     // find the appropriate friction coefficient
     double mud = a_parent->m_material->getDynamicFriction();
@@ -974,88 +974,18 @@ void cAlgorithmFingerProxy::testFrictionAndMoveProxy(const cVector3d& a_goal,
     double atmd = atan(mud);
     double atms = atan(mus);
 
-    // compute a vector from the device to the proxy, for computing
-    // the angle of the friction cone
-    cVector3d vDeviceProxy = cSub(a_proxy, m_deviceGlobalPos);
-    vDeviceProxy.normalize();
+    // compute a vector from the proxy to the device
+    cVector3d vProxyDevice = cSub(projectedGoal, a_proxy);
 
-    // now compute the angle of the friction cone...
-    double theta = acos(vDeviceProxy.dot(a_normal));
+	double z_max = 0.3 * mud;
 
-    // manage the "slip-friction" state machine
-
-    // if the dynamic friction radius is for some reason larger than the
-    // static friction radius, always slip
-    if (mud > mus)
-    {
-        m_slipping = true;
-    }
-
-    // if we're slipping...
-    else if (m_slipping)
-    {
-        if (theta < (atmd * m_frictionDynHysteresisMultiplier))
-        {
-            m_slipping = false;
-        }
-        else
-        {
-            m_slipping = true;
-        }
-    }
-
-    // if we're not slipping...
-    else
-    {
-        if (theta > atms)
-        {
-            m_slipping = true;
-        }
-        else
-        {
-            m_slipping = false;
-        }
-    }
-
-    // the friction coefficient we're going to use...
-    double mu;
-    if (m_slipping)
-    {
-        mu = mud;
-    }
-    else
-    {
-        mu = mus;
-    }
-
-    // calculate the friction radius as the absolute value of the penetration
-    // depth times the coefficient of friction
-    double frictionRadius = fabs(penetrationDepth * mu);
-
-    // calculate the distance between the proxy position and the current
-    // goal position.
-    double r = a_proxy.distance(a_goal);
-
-    // if this distance is smaller than C_SMALL, we consider the proxy
-    // to be at the same position as the goal, and we're done...
-    if (r < C_SMALL)
-    {
-        m_nextBestProxyGlobalPos = a_proxy;
-    }
-
-    // if the proxy is outside the friction cone, update its position to
-    // be on the perimeter of the friction cone...
-    else if (r > frictionRadius)
-    {
-        m_nextBestProxyGlobalPos = cAdd(a_goal, cMul(frictionRadius/r, cSub(a_proxy, a_goal)));
-    }
-
-    // otherwise, if the proxy is inside the friction cone, the proxy
-    // should not be moved (set next best position to current position)
-    else
-    {
-        m_nextBestProxyGlobalPos = a_proxy;
-    }
+	if (vProxyDevice.length() > z_max) {
+		vProxyDevice.normalize();
+		m_nextBestProxyGlobalPos = projectedGoal - vProxyDevice * z_max;
+	}
+	else {
+		m_nextBestProxyGlobalPos = a_proxy;
+	}
 
     // we're done; record the fact that we're still touching an object...
     return;
