@@ -109,6 +109,8 @@ cHapticPoint::cHapticPoint(cGenericTool* a_parentTool)
 
     // Initialize force rendering algorithms
     initialize(cVector3d(0.0, 0.0, 0.0));
+
+	clock.start(true);
 }
 
 
@@ -519,6 +521,8 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
 	// ALGORITHM TRANSIENT FORCE
 	///////////////////////////////////////////////////////////////////////////
 
+	cVector3d force2 = cVector3d(0.0, 0.0, 0.0);
+
 	// velocity of tool
 	double velocity = m_parentTool->getDeviceGlobalLinVel().length();
 
@@ -527,11 +531,16 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
 		{
 			if (m_transientProxyContacts[i] == NULL && m_meshProxyContacts[i] != NULL)
 			{
-				printf("IN\n");
+				m_transientStartTime = clock.getCurrentTimeSeconds();
+				m_transientNormal = m_meshProxyContacts[i]->m_interactionNormal;
 			}
 
 			m_transientProxyContacts[i] = m_meshProxyContacts[i];
 		}
+
+		double t = clock.getCurrentTimeSeconds() - m_transientStartTime;
+		if (0 < t && t <= m_transientDuration)
+			force2 = m_transientMagnitude * velocity * exp(log(0.01) *  t / m_transientDuration) * sin(2 * M_PI * m_transientFrequency * t) * m_transientNormal;
 	}
 
     ///////////////////////////////////////////////////////////////////////////
@@ -543,6 +552,7 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
 
     // finally return the contribution from both force models.
     force0.addr(force1, m_lastComputedGlobalForce);
+	m_lastComputedGlobalForce.addr(force2, m_lastComputedGlobalForce);
 
 
     ///////////////////////////////////////////////////////////////////////////

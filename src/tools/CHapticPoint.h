@@ -50,6 +50,7 @@
 #include "forces/CAlgorithmPotentialField.h"
 #include "world/CGenericObject.h"
 #include "world/CShapeSphere.h"
+#include "timers/CPrecisionClock.h"
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
@@ -328,8 +329,17 @@ protected:
 	//! Frecuency of sinusoidal function
 	double m_transientFrequency;
 
+	//! Start time of transient force
+	double m_transientStartTime;
+
+	//! Normal vector of transient event
+	cVector3d m_transientNormal;
+
 	//! Pointers to mesh objects for which the proxy was last in contact with.
 	cGenericObject* m_transientProxyContacts[3];
+
+	//! Clock to get current time
+	cPrecisionClock clock;
 };
 
 //------------------------------------------------------------------------------
