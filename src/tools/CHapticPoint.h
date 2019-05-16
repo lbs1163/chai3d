@@ -317,9 +317,7 @@ protected:
 	//--------------------------------------------------------------------------
 
 protected:
-	//! If __true__ then audio sources are enabled.
-	bool m_useTransientForce;
-
+	
 	//! Magnitude of sinusoidal function
 	double m_transientMagnitude;
 
@@ -328,6 +326,9 @@ protected:
 
 	//! Frecuency of sinusoidal function
 	double m_transientFrequency;
+
+	//! Velocity of proxy when impact happen
+	double m_transientVelocityIn;
 
 	//! Start time of transient force
 	double m_transientStartTime;

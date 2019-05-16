@@ -2413,6 +2413,46 @@ void cGenericObject::adjustCollisionSegment(cVector3d& a_segmentPointA,
     a_segmentPointAadjusted = cMul( cTranspose(m_prevGlobalRot), cSub(point, m_prevGlobalPos));
 }
 
+//==============================================================================
+/*!
+This method create transient force of decaying sinusoidal function.
+
+\param  magnitude       Magnitude of sinusoidal function
+\param  duration        Duration of transient force
+\param  frequency       Frecuency of sinusoidal function
+*/
+//==============================================================================
+bool cGenericObject::createTransientForce(double magnitude, double duration, double frequency)
+{
+	// sanity check
+	if (magnitude == 0 || duration < 0) { return (C_ERROR); }
+
+	// set the values for transient force
+	m_transientMagnitude = magnitude;
+	m_transientDuration = duration;
+	m_transientFrequency = frequency;
+
+	// transient force is now enabled
+	m_useTransientForce = true;
+
+	// success
+	return (C_SUCCESS);
+}
+
+//==============================================================================
+/*!
+This method remove transient force.
+*/
+//==============================================================================
+bool cGenericObject::removeTransientForce()
+{
+	// transient force is now disabled
+	m_useTransientForce = false;
+
+	// success
+	return (C_SUCCESS);
+}
+
 
 //==============================================================================
 /*!

@@ -611,6 +611,18 @@ public:
         cColorf& a_color, 
         const bool a_affectChildren = false);
 
+	//-----------------------------------------------------------------------
+	// PUBLIC METHODS - TRANSIENT FORCE:
+	//-----------------------------------------------------------------------
+
+public:
+
+	//! This method create transient force of decaying sinusoidal function.
+	bool createTransientForce(double magnitude, double duration, double frequency);
+
+	//! This method remove transient force.
+	bool removeTransientForce();
+
 
     //-----------------------------------------------------------------------
     // PUBLIC METHODS - SCENE GRAPH:
@@ -887,6 +899,18 @@ protected:
     //! List of haptic effects programmed for this object.
     std::vector<cGenericEffect*> m_effects;
 
+	//-----------------------------------------------------------------------
+	// PUBLIC MEMBERS - TRANSIENT FORCE:
+	//-----------------------------------------------------------------------
+
+public:
+
+	//! If __true__ then transient force is enabled.
+	bool m_useTransientForce;
+
+	double m_transientMagnitude;
+	double m_transientDuration;
+	double m_transientFrequency;
 
     //-----------------------------------------------------------------------
     // PROTECTED VIRTUAL METHODS:

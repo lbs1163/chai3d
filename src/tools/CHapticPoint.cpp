@@ -82,7 +82,7 @@ cHapticPoint::cHapticPoint(cGenericTool* a_parentTool)
 	m_transientProxyContacts[0] = NULL;
 	m_transientProxyContacts[1] = NULL;
 	m_transientProxyContacts[2] = NULL;
-	m_useTransientForce = false;
+	m_transientStartTime = 0;
 
     // create finger-proxy algorithm used for modelling contacts with 
     // cMesh objects.
@@ -401,47 +401,6 @@ bool cHapticPoint::createAudioSource(cAudioDevice* a_audioDevice)
 
 //==============================================================================
 /*!
-	This method create transient force of decaying sinusoidal function.
-
-	\param  magnitude       Magnitude of sinusoidal function
-	\param  duration        Duration of transient force
-	\param  frequency       Frecuency of sinusoidal function
-*/
-//==============================================================================
-bool cHapticPoint::createTransientForce(double magnitude, double duration, double frequency)
-{
-	// sanity check
-	if (magnitude == 0 || duration < 0) { return (C_ERROR); }
-
-	// set the values for transient force
-	m_transientMagnitude = magnitude;
-	m_transientDuration = duration;
-	m_transientFrequency = frequency;
-
-	// transient force is now enabled
-	m_useTransientForce = true;
-
-	// success
-	return (C_SUCCESS);
-}
-
-//==============================================================================
-/*!
-	This method remove transient force.
-*/
-//==============================================================================
-bool cHapticPoint::removeTransientForce()
-{
-	// transient force is now disabled
-	m_useTransientForce = false;
-
-	// success
-	return (C_SUCCESS);
-}
-
-
-//==============================================================================
-/*!
     This method computes all interaction forces between the tool haptic points
     and the virtual environment.
 
@@ -523,24 +482,30 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
 
 	cVector3d force2 = cVector3d(0.0, 0.0, 0.0);
 
-	// velocity of tool
-	double velocity = m_parentTool->getDeviceGlobalLinVel().length();
-
-	if (m_useTransientForce) {
-		for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
+	{
+		if (m_transientProxyContacts[i] == NULL && m_meshProxyContacts[i] != NULL && m_meshProxyContacts[i]->m_useTransientForce && m_transientStartTime == 0)
 		{
-			if (m_transientProxyContacts[i] == NULL && m_meshProxyContacts[i] != NULL)
-			{
-				m_transientStartTime = clock.getCurrentTimeSeconds();
-				m_transientNormal = m_meshProxyContacts[i]->m_interactionNormal;
-			}
+			m_transientStartTime = clock.getCurrentTimeSeconds();
+			m_transientNormal = m_meshProxyContacts[i]->m_interactionNormal;
+			m_transientMagnitude = m_meshProxyContacts[i]->m_transientMagnitude;
+			m_transientDuration = m_meshProxyContacts[i]->m_transientDuration;
+			m_transientFrequency = m_meshProxyContacts[i]->m_transientFrequency;
+			m_transientVelocityIn = a_globalLinVel.length();
 
-			m_transientProxyContacts[i] = m_meshProxyContacts[i];
+			m_transientNormal.normalize();
 		}
 
-		double t = clock.getCurrentTimeSeconds() - m_transientStartTime;
-		if (0 < t && t <= m_transientDuration)
-			force2 = m_transientMagnitude * velocity * exp(log(0.01) *  t / m_transientDuration) * sin(2 * M_PI * m_transientFrequency * t) * m_transientNormal;
+		m_transientProxyContacts[i] = m_meshProxyContacts[i];
+	}
+
+	double t = clock.getCurrentTimeSeconds() - m_transientStartTime;
+	if (0 < t && t <= m_transientDuration) {
+		printf("%f\n", m_transientMagnitude * m_transientVelocityIn);
+		force2 = m_transientMagnitude * m_transientVelocityIn * exp(log(0.01) *  t / m_transientDuration) * sin(2 * M_PI * m_transientFrequency * t) * m_transientNormal;
+	}
+	else if (t > m_transientDuration) {
+		m_transientStartTime = 0;
 	}
 
     ///////////////////////////////////////////////////////////////////////////
@@ -561,6 +526,9 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
 
     // force magnitude
     double force = m_lastComputedGlobalForce.length();
+
+	// velocity of tool
+	double velocity = m_parentTool->getDeviceGlobalLinVel().length();
 
     // friction sound
     if (m_useAudioSources)
