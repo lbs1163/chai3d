@@ -370,6 +370,9 @@ int main(int argc, char* argv[])
     // the tool is located inside an object for instance. 
     tool->setWaitForSmallForce(true);
 
+	// create transient force
+	tool->m_hapticPoint->createTransientForce(15.9, 0.055, 55);
+
     // start the haptic tool
     tool->start();
 

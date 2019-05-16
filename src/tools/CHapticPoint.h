@@ -170,6 +170,12 @@ public:
     //! This method Create an audio source for this haptic point.
     bool createAudioSource(cAudioDevice* a_audioDevice);
 
+	//! This method create transient force of decaying sinusoid function.
+	bool createTransientForce(double magnitude, double duration, double frequency);
+
+	//! This method remove transient force of decaying sinusoid function.
+	bool removeTransientForce();
+
 
     //--------------------------------------------------------------------------
     // PUBLIC METHODS - COLLISION EVENTS (MESH OBJECTS)
@@ -304,6 +310,26 @@ protected:
 
     //! Pointers to mesh objects for which the proxy was last in contact with.
     cGenericObject* m_audioProxyContacts[3];
+
+	//--------------------------------------------------------------------------
+	// PROTECTED MEMBERS - TRANSIENT FORCE
+	//--------------------------------------------------------------------------
+
+protected:
+	//! If __true__ then audio sources are enabled.
+	bool m_useTransientForce;
+
+	//! Magnitude of sinusoidal function
+	double m_transientMagnitude;
+
+	//! Duration of transient force
+	double m_transientDuration;
+
+	//! Frecuency of sinusoidal function
+	double m_transientFrequency;
+
+	//! Pointers to mesh objects for which the proxy was last in contact with.
+	cGenericObject* m_transientProxyContacts[3];
 };
 
 //------------------------------------------------------------------------------

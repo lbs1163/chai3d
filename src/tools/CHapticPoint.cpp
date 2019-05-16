@@ -79,6 +79,10 @@ cHapticPoint::cHapticPoint(cGenericTool* a_parentTool)
     m_audioProxyContacts[1]	= NULL;
     m_audioProxyContacts[2]	= NULL;
     m_useAudioSources = false;
+	m_transientProxyContacts[0] = NULL;
+	m_transientProxyContacts[1] = NULL;
+	m_transientProxyContacts[2] = NULL;
+	m_useTransientForce = false;
 
     // create finger-proxy algorithm used for modelling contacts with 
     // cMesh objects.
@@ -395,6 +399,47 @@ bool cHapticPoint::createAudioSource(cAudioDevice* a_audioDevice)
 
 //==============================================================================
 /*!
+	This method create transient force of decaying sinusoidal function.
+
+	\param  magnitude       Magnitude of sinusoidal function
+	\param  duration        Duration of transient force
+	\param  frequency       Frecuency of sinusoidal function
+*/
+//==============================================================================
+bool cHapticPoint::createTransientForce(double magnitude, double duration, double frequency)
+{
+	// sanity check
+	if (magnitude == 0 || duration < 0) { return (C_ERROR); }
+
+	// set the values for transient force
+	m_transientMagnitude = magnitude;
+	m_transientDuration = duration;
+	m_transientFrequency = frequency;
+
+	// transient force is now enabled
+	m_useTransientForce = true;
+
+	// success
+	return (C_SUCCESS);
+}
+
+//==============================================================================
+/*!
+	This method remove transient force.
+*/
+//==============================================================================
+bool cHapticPoint::removeTransientForce()
+{
+	// transient force is now disabled
+	m_useTransientForce = false;
+
+	// success
+	return (C_SUCCESS);
+}
+
+
+//==============================================================================
+/*!
     This method computes all interaction forces between the tool haptic points
     and the virtual environment.
 
@@ -470,6 +515,24 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
     // objects for which haptic effects have been programmed
     cVector3d force1 = m_algorithmPotentialField->computeForces(a_globalPos, a_globalLinVel);
 
+	///////////////////////////////////////////////////////////////////////////
+	// ALGORITHM TRANSIENT FORCE
+	///////////////////////////////////////////////////////////////////////////
+
+	// velocity of tool
+	double velocity = m_parentTool->getDeviceGlobalLinVel().length();
+
+	if (m_useTransientForce) {
+		for (int i = 0; i < 3; i++)
+		{
+			if (m_transientProxyContacts[i] == NULL && m_meshProxyContacts[i] != NULL)
+			{
+				printf("IN\n");
+			}
+
+			m_transientProxyContacts[i] = m_meshProxyContacts[i];
+		}
+	}
 
     ///////////////////////////////////////////////////////////////////////////
     // FINALIZATION
@@ -488,9 +551,6 @@ cVector3d cHapticPoint::computeInteractionForces(cVector3d& a_globalPos,
 
     // force magnitude
     double force = m_lastComputedGlobalForce.length();
-
-    // velocity of tool
-    double velocity = m_parentTool->getDeviceGlobalLinVel().length();
 
     // friction sound
     if (m_useAudioSources)
