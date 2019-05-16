@@ -970,10 +970,6 @@ void cAlgorithmFingerProxy::testFrictionAndMoveProxy(const cVector3d& a_goal,
         return;
     }
 
-    // the corresponding friction cone radii
-    double atmd = atan(mud);
-    double atms = atan(mus);
-
     // compute a vector from the proxy to the device
     cVector3d vProxyDevice = cSub(projectedGoal, a_proxy);
 
