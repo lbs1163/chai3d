@@ -958,6 +958,7 @@ void cAlgorithmFingerProxy::testFrictionAndMoveProxy(const cVector3d& a_goal,
     // plane of the obstructing surface from last proxy position
     cVector3d projectedGoal = cProjectPointOnPlane(m_deviceGlobalPos, a_proxy, a_normal);
 	cVector3d displacementVector = cSub(projectedGoal, a_proxy);
+	double penetrationDepth = cSub(m_deviceGlobalPos, projectedGoal).length();
 
     // find the appropriate friction coefficient
     double mud = a_parent->m_material->getDynamicFriction();
@@ -973,7 +974,7 @@ void cAlgorithmFingerProxy::testFrictionAndMoveProxy(const cVector3d& a_goal,
     // compute a vector from the proxy to the device
     cVector3d vProxyDevice = cSub(projectedGoal, a_proxy);
 
-	double z_max = 0.3 * mud;
+	double z_max = penetrationDepth * mud;
 
 	if (vProxyDevice.length() > z_max) {
 		vProxyDevice.normalize();
